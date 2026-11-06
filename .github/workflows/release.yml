@@ -50,6 +50,9 @@ jobs:
       # Static C runtime: Plaza.exe runs without the Visual C++ redistributable.
       RUSTFLAGS: -C target-feature=+crt-static
       PYTHON: python
+      # Azure Artifact Signing (formerly Trusted Signing) switches on when these repository
+      # secrets exist; see the signing notes in the release docs. Unsigned otherwise.
+      HAVE_AZ_SIGN: ${{ secrets.AZURE_CLIENT_SECRET != '' }}
     defaults:
       run: { shell: bash }
     steps:
@@ -78,6 +81,40 @@ jobs:
           Stop-Process $p
       - uses: actions/upload-artifact@v7
         with: { name: shot-windows, path: shots/*, if-no-files-found: warn }
+      - name: Sign Plaza.exe (only with the secrets set)
+        if: env.HAVE_AZ_SIGN == 'true'
+        uses: azure/artifact-signing-action@v2
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE }}
+          files-folder: ${{ github.workspace }}\target\release
+          files-folder-filter: exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+          description: Plaza
+          description-url: https://centerpointlabs.dev/services/plaza/
+          exclude-environment-credential: false
+          exclude-workload-identity-credential: true
+          exclude-managed-identity-credential: true
+          exclude-shared-token-cache-credential: true
+          exclude-visual-studio-credential: true
+          exclude-visual-studio-code-credential: true
+          exclude-azure-cli-credential: true
+          exclude-azure-powershell-credential: true
+          exclude-azure-developer-cli-credential: true
+          exclude-interactive-browser-credential: true
+      - name: Check the signature (only with the secrets set)
+        if: env.HAVE_AZ_SIGN == 'true'
+        shell: pwsh
+        run: |
+          $sig = Get-AuthenticodeSignature target/release/plaza.exe
+          $sig | Format-List Status, StatusMessage, SignerCertificate
+          if ($sig.Status -ne 'Valid') { throw "Plaza.exe signature is $($sig.Status)" }
       - run: tools/package-windows.sh target/release/plaza.exe dist
       - uses: actions/upload-artifact@v7
         with: { name: dist-windows, path: dist/*, if-no-files-found: error }
