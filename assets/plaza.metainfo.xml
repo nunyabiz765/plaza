@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>dev.centerpointlabs.plaza</id>
+  <name>Plaza</name>
+  <summary>80s polysynth for vaporwave</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT OR Apache-2.0</project_license>
+  <developer id="dev.centerpointlabs">
+    <name>Center Point Labs</name>
+  </developer>
+  <description>
+    <p>
+      Plaza is an eight-voice synthesizer with an ensemble chorus, a big modulated
+      reverb, a cassette stage and a slow + pitch down switch. Play it from the
+      computer keyboard or a USB MIDI keyboard, and record what you play as WAV files
+      in your Music folder.
+    </p>
+    <p>
+      Everything is synthesized; there are no samples, and Plaza makes no network
+      connections.
+    </p>
+  </description>
+  <launchable type="desktop-id">plaza.desktop</launchable>
+  <icon type="stock">plaza</icon>
+  <url type="homepage">https://centerpointlabs.dev/services/plaza/</url>
+  <url type="bugtracker">https://github.com/nunyabiz765/plaza/issues</url>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+    <category>Music</category>
+  </categories>
+  <keywords>
+    <keyword>synth</keyword>
+    <keyword>synthesizer</keyword>
+    <keyword>vaporwave</keyword>
+    <keyword>midi</keyword>
+  </keywords>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.2" date="2026-11-06">
+      <description>
+        <p>A .deb package for Ubuntu, Zorin OS, Linux Mint and Pop!_OS. Linux sound now goes through PulseAudio or PipeWire's PulseAudio service, so Plaza also starts on Ubuntu 22.04 and the distros built on it.</p>
+      </description>
+    </release>
+    <release version="0.1.1" date="2026-11-06"/>
+    <release version="0.1.0" date="2026-11-06"/>
+  </releases>
+</component>
