@@ -91,24 +91,24 @@ plaza bench                           # offline DSP speed
 
 ### Windows 10/11 (x86_64)
 
-Download `plaza-0.1.1-windows-x86_64.zip` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), unzip it anywhere and double-click `Plaza.exe`. It's portable: nothing is installed, no admin rights are needed, and deleting the folder removes it.
+Download `plaza-0.1.2-windows-x86_64.zip` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), unzip it anywhere and double-click `Plaza.exe`. It's portable: nothing is installed, no admin rights are needed, and deleting the folder removes it.
 
 Plaza isn't code-signed yet, so the first launch shows SmartScreen's **"Windows protected your PC"**. Click **More info**, check the app is `Plaza.exe`, then **Run anyway**.
 
 ### macOS 11 or newer (Apple Silicon and Intel)
 
-Download `plaza-0.1.1-macos-universal.dmg` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), open it and drag Plaza into Applications.
+Download `plaza-0.1.2-macos-universal.dmg` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), open it and drag Plaza into Applications.
 
 Plaza isn't notarized by Apple yet, so macOS blocks the first open. On macOS 14 or older, right-click Plaza in Applications, choose **Open**, then **Open** again. On macOS 15 or newer, double-click it once and click **Done**, then go to **System Settings → Privacy & Security**, find "Plaza was blocked" near the bottom, click **Open Anyway** and confirm. macOS remembers the choice.
 
 ### Prebuilt binary (x86_64 Linux)
 
-Download `plaza-0.1.1-x86_64-linux.tar.gz` and its `.sha256` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), then:
+Download `plaza-0.1.2-x86_64-linux.tar.gz` and its `.sha256` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), then:
 
 ```sh
-sha256sum -c plaza-0.1.1-x86_64-linux.tar.gz.sha256
-tar xf plaza-0.1.1-x86_64-linux.tar.gz
-cd plaza-0.1.1-x86_64-linux
+sha256sum -c plaza-0.1.2-x86_64-linux.tar.gz.sha256
+tar xf plaza-0.1.2-x86_64-linux.tar.gz
+cd plaza-0.1.2-x86_64-linux
 ./install.sh
 ```
 
