@@ -166,6 +166,14 @@ The sound engine is `src/` minus `main.rs`, `app.rs`, `audio.rs` and `midi.rs`. 
 
 `PLAZA_HOLD="60,64,67"` holds notes at startup. It's for screenshots.
 
+## Windows and macOS (v0.1.1, 2026-11-06)
+
+Built by GitHub Actions on every tag (`windows-latest`, `macos-latest`); all 34 tests pass on Windows, macOS and Linux there.
+
+- **Windows:** on the CI runner (Windows Server, x86_64), `Plaza.exe` renders offline and its window opens and stays up (screenshot taken there; muted, the runner has no sound card). The .exe is a GUI app with the icon embedded, and it only needs Windows' own DLLs. **Not run on a real Windows 10/11 PC yet**: sound output through WASAPI, MIDI, SmartScreen and HiDPI scaling are untested.
+- **macOS:** on a MacBook Air (Apple Silicon, macOS 26), the .dmg's universal `Plaza.app` opened its window, and `plaza probe` ran the real-time engine on CoreAudio (MacBook Air speakers, 48 kHz, 256 frames, worst callback 4.9% of its budget, output muted, one xrun reported). The x86_64 half rendered offline under Rosetta on CI. **Not tested:** audible playback, MIDI, an Intel Mac, and the Gatekeeper first-open steps (the test copy wasn't downloaded through a browser, so it had no quarantine flag).
+- On a small screen, Windows' 150% scaling on a 1080p laptop leaves 1280×720 of room, a little less than Plaza's 1200×740 minimum window size.
+
 ## Tested / not tested (v0.1.0, 2026-11-06)
 
 Tested on one machine: x86_64 Arch Linux, KDE Plasma 6.7 on Wayland, PipeWire 1.6.
