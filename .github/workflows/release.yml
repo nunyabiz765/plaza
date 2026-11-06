@@ -29,16 +29,21 @@ jobs:
           apt-get install -y -qq --no-install-recommends build-essential pkg-config curl ca-certificates git \
             python3 clang libclang-dev libasound2-dev libpipewire-0.3-dev libspa-0.2-dev libpulse-dev \
             libfontconfig1-dev libfreetype6-dev libxkbcommon-dev
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Rust
         run: |
           curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - run: cargo test --release --locked
       - run: cargo build --release --locked
+      - name: Smoke test (CLI)
+        run: |
+          target/release/plaza --version
+          target/release/plaza render -o smoke.wav 'Chorus Pad=chords'
+          test "$(stat -c%s smoke.wav)" -gt 100000
       - run: tools/package-linux.sh target/release/plaza dist
-      - uses: actions/upload-artifact@v4
-        with: { name: linux, path: dist/*, if-no-files-found: error }
+      - uses: actions/upload-artifact@v7
+        with: { name: dist-linux, path: dist/*, if-no-files-found: error }
 
   windows:
     runs-on: windows-latest
@@ -49,34 +54,68 @@ jobs:
     defaults:
       run: { shell: bash }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: rustup toolchain install stable --profile minimal && rustup default stable
       - run: cargo test --release --locked
       - run: cargo build --release --locked
+      - name: Smoke test (CLI)
+        run: |
+          target/release/plaza.exe --version
+          target/release/plaza.exe presets
+          target/release/plaza.exe render -o smoke.wav 'Chorus Pad=chords'
+          test "$(stat -c%s smoke.wav)" -gt 100000
+      - name: Smoke test (the window opens and stays up, muted)
+        shell: pwsh
+        run: |
+          $p = Start-Process target/release/plaza.exe -ArgumentList "--muted" -PassThru
+          Start-Sleep 12
+          if ($p.HasExited) { throw "Plaza exited with code $($p.ExitCode)" }
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          New-Item -ItemType Directory -Force shots | Out-Null
+          $bmp.Save("shots/windows-runner.png")
+          Stop-Process $p
+      - uses: actions/upload-artifact@v7
+        with: { name: shot-windows, path: shots/*, if-no-files-found: warn }
       - run: tools/package-windows.sh target/release/plaza.exe dist
-      - uses: actions/upload-artifact@v4
-        with: { name: windows, path: dist/*, if-no-files-found: error }
+      - uses: actions/upload-artifact@v7
+        with: { name: dist-windows, path: dist/*, if-no-files-found: error }
 
   macos:
     runs-on: macos-latest
     env:
       MACOSX_DEPLOYMENT_TARGET: "11.0"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: |
           rustup toolchain install stable --profile minimal && rustup default stable
           rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - run: cargo test --release --locked
       - run: cargo build --release --locked --target aarch64-apple-darwin
       - run: cargo build --release --locked --target x86_64-apple-darwin
+      - name: Smoke test (CLI, then the window opens and stays up, muted)
+        run: |
+          B=target/aarch64-apple-darwin/release/plaza
+          $B --version
+          $B render -o smoke.wav 'Chorus Pad=chords'
+          test "$(stat -f%z smoke.wav)" -gt 100000
+          arch -x86_64 target/x86_64-apple-darwin/release/plaza render -o smoke-x86.wav 'Chorus Pad=chords'
+          $B --muted & P=$!
+          sleep 12
+          kill -0 $P
+          mkdir -p shots && (screencapture -x shots/macos-runner.png || true)
+          kill $P
+      - uses: actions/upload-artifact@v7
+        with: { name: shot-macos, path: shots/*, if-no-files-found: warn }
       - run: |
           tools/package-macos.sh target/aarch64-apple-darwin/release/plaza \
             target/x86_64-apple-darwin/release/plaza dist
-      - uses: actions/upload-artifact@v4
-        with: { name: macos, path: dist/*, if-no-files-found: error }
+      - uses: actions/upload-artifact@v7
+        with: { name: dist-macos, path: dist/*, if-no-files-found: error }
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
     needs: [linux, windows, macos]
     runs-on: ubuntu-latest
     permissions:
@@ -86,10 +125,12 @@ jobs:
       GH_REPO: ${{ github.repository }}
       TAG: ${{ github.ref_name }}
     steps:
-      - uses: actions/download-artifact@v4
-        with: { path: dist, merge-multiple: true }
+      - uses: actions/download-artifact@v8
+        with: { path: dist, pattern: dist-*, merge-multiple: true }
       - run: ls -la dist
       - name: Draft the release if the tag has none
+        if: startsWith(github.ref, 'refs/tags/v')
         run: gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --draft --verify-tag --title "Plaza ${TAG#v}" --notes "Linux, Windows and macOS builds. Notes to follow."
       - name: Upload (fails rather than overwrite an existing asset)
+        if: startsWith(github.ref, 'refs/tags/v')
         run: gh release upload "$TAG" dist/*

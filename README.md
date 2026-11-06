@@ -1,6 +1,6 @@
 # Plaza
 
-An 80s-style polysynth for making vaporwave, for Linux. An ensemble chorus, a big modulated reverb, a cassette stage, and a slow + pitch down switch. Everything is synthesized; there are no samples. Rust, [Slint](https://slint.dev) UI, [cpal](https://github.com/RustAudio/cpal) audio over native PipeWire, [midir](https://github.com/Boddlnagg/midir) for USB MIDI. It makes no network connections.
+An 80s-style polysynth for making vaporwave, for Linux, Windows and macOS. An ensemble chorus, a big modulated reverb, a cassette stage, and a slow + pitch down switch. Everything is synthesized; there are no samples. Rust, [Slint](https://slint.dev) UI, [cpal](https://github.com/RustAudio/cpal) audio (native PipeWire on Linux, WASAPI on Windows, CoreAudio on macOS), [midir](https://github.com/Boddlnagg/midir) for USB MIDI. It makes no network connections.
 
 Free and open source, from [Center Point Labs](https://centerpointlabs.dev/services/plaza/). Inspired by classic 80s polysynths and FM keyboards; not affiliated with any instrument maker.
 
@@ -62,15 +62,15 @@ Z X C V B N M   Q W E R T Y U I      white keys
 lower octave    upper octave
 ```
 
-`[` `]` or ← → change octave · ↑ ↓ change preset · Tab toggles slow · Esc releases every note. You can also click the on-screen keys.
+`[` `]` or ← → change octave · ↑ ↓ change preset · Tab toggles slow · Esc releases every note. You can also click the on-screen keys. Keys pressed with Ctrl (or ⌘ on a Mac) are left to the system, so ⌘Q, ⌘H and the like work as usual.
 
 **USB MIDI:** plug in a keyboard and Plaza connects to the first real input port within about 3 seconds, and reconnects after unplug/replug. Notes with velocity, pitch bend (±2 semitones), mod wheel (vibrato), sustain pedal (CC64) and All Notes Off are supported, on any channel. The status bar shows the port name.
 
-**Recording:** the ● REC button writes what you hear to `~/Music/Plaza/plaza-YYYYMMDD-HHMMSS.wav` (24-bit, at the device rate, usually 48 kHz). ♫ opens that folder.
+**Recording:** the ● REC button writes what you hear to `plaza-YYYYMMDD-HHMMSS.wav` (24-bit, at the device rate, usually 48 kHz) in a Plaza folder inside your Music folder: `~/Music/Plaza` on Linux and macOS, `Music\Plaza` in your user folder on Windows. ♫ opens that folder.
 
 ## Audio
 
-Plaza uses cpal's native PipeWire host, falling back to PulseAudio. It asks for a 256-frame buffer (5.3 ms at 48 kHz) so the keys feel immediate; if the server refuses, it falls back to the server's default. `PLAZA_BUFFER=512 plaza` picks another size, and `PLAZA_BUFFER=0` uses the server default. The audio callback doesn't lock or allocate, and it turns on flush-to-zero so decaying tails can't cause denormal CPU spikes. The status bar shows the buffer size, worst-case DSP load, active voices, and xruns if any happen.
+On Linux, Plaza uses cpal's native PipeWire host, falling back to PulseAudio. Windows uses WASAPI (shared mode) and macOS CoreAudio, each on the system's default output device. It asks for a 256-frame buffer (5.3 ms at 48 kHz) so the keys feel immediate; if the server refuses, it falls back to the server's default. `PLAZA_BUFFER=512 plaza` picks another size, and `PLAZA_BUFFER=0` uses the server default. The audio callback doesn't lock or allocate, and it turns on flush-to-zero so decaying tails can't cause denormal CPU spikes. The status bar shows the buffer size, worst-case DSP load, active voices, and xruns if any happen.
 
 ## Command line
 
@@ -89,14 +89,26 @@ plaza bench                           # offline DSP speed
 
 ## Install
 
+### Windows 10/11 (x86_64)
+
+Download `plaza-0.1.1-windows-x86_64.zip` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), unzip it anywhere and double-click `Plaza.exe`. It's portable: nothing is installed, no admin rights are needed, and deleting the folder removes it.
+
+Plaza isn't code-signed yet, so the first launch shows SmartScreen's **"Windows protected your PC"**. Click **More info**, check the app is `Plaza.exe`, then **Run anyway**.
+
+### macOS 11 or newer (Apple Silicon and Intel)
+
+Download `plaza-0.1.1-macos-universal.dmg` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), open it and drag Plaza into Applications.
+
+Plaza isn't notarized by Apple yet, so macOS blocks the first open. On macOS 14 or older, right-click Plaza in Applications, choose **Open**, then **Open** again. On macOS 15 or newer, double-click it once and click **Done**, then go to **System Settings → Privacy & Security**, find "Plaza was blocked" near the bottom, click **Open Anyway** and confirm. macOS remembers the choice.
+
 ### Prebuilt binary (x86_64 Linux)
 
-Download `plaza-0.1.0-x86_64-linux.tar.gz` and its `.sha256` from the [v0.1.0 release](https://github.com/nunyabiz765/plaza/releases/tag/v0.1.0), then:
+Download `plaza-0.1.1-x86_64-linux.tar.gz` and its `.sha256` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), then:
 
 ```sh
-sha256sum -c plaza-0.1.0-x86_64-linux.tar.gz.sha256
-tar xf plaza-0.1.0-x86_64-linux.tar.gz
-cd plaza-0.1.0-x86_64-linux
+sha256sum -c plaza-0.1.1-x86_64-linux.tar.gz.sha256
+tar xf plaza-0.1.1-x86_64-linux.tar.gz
+cd plaza-0.1.1-x86_64-linux
 ./install.sh
 ```
 
@@ -133,8 +145,10 @@ rm ~/.local/bin/plaza ~/.local/share/applications/plaza.desktop ~/.local/share/i
 ```sh
 cargo test --release      # DSP unit tests + offline render checks (34 tests)
 tools/shots.sh            # retake docs/screenshots on a private Xvfb display (runs --muted)
-tools/build-release.sh OUT  # release tarball, built in a Debian 12 container (podman)
+tools/build-release.sh OUT  # Linux release tarball, built in a Debian 12 container (podman)
 ```
+
+Windows and macOS builds come from GitHub Actions (`.github/workflows/release.yml`): pushing a `v*` tag builds all three platforms, runs the tests on each, and attaches the Linux tarball, the Windows zip and the macOS .dmg to that tag's release. To build on Windows or macOS yourself, install Rust and run `cargo build --release`; nothing else is needed. `tools/package-windows.sh` and `tools/package-macos.sh` make the zip and the universal `.app`/`.dmg`.
 
 The sound engine is `src/` minus `main.rs`, `app.rs`, `audio.rs` and `midi.rs`. It's a UI-free library, so every test runs headless. The tests cover:
 

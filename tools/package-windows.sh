@@ -15,5 +15,5 @@ cp -r LICENSES "$DIR/"
 rm -f "$OUT/$NAME.zip"
 if command -v 7z >/dev/null; then (cd "$STAGE" && 7z a -tzip -mx=9 "$OUT/$NAME.zip" Plaza >/dev/null)
 else (cd "$STAGE" && zip -qr9 "$OUT/$NAME.zip" Plaza); fi
-(cd "$OUT" && sha256sum "$NAME.zip" > "$NAME.zip.sha256" && cat "$NAME.zip.sha256")
+(cd "$OUT" && sha256sum "$NAME.zip" | sed 's/ \*/  /' > "$NAME.zip.sha256" && cat "$NAME.zip.sha256")
 rm -rf "$STAGE"
