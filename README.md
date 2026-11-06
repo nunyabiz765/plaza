@@ -99,7 +99,7 @@ Plaza isn't code-signed yet, so the first launch shows SmartScreen's **"Windows 
 
 Download `plaza-0.1.2-macos-universal.dmg` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), open it and drag Plaza into Applications.
 
-Plaza isn't notarized by Apple yet, so macOS blocks the first open. On macOS 14 or older, right-click Plaza in Applications, choose **Open**, then **Open** again. On macOS 15 or newer, double-click it once and click **Done**, then go to **System Settings → Privacy & Security**, find "Plaza was blocked" near the bottom, click **Open Anyway** and confirm. macOS remembers the choice.
+Plaza is signed with a Developer ID and notarized by Apple (since 0.1.2), so it opens like any other downloaded app.
 
 ### Prebuilt binary (x86_64 Linux)
 
