@@ -11,7 +11,10 @@ distribute a modified build, keep that widget, or display the Slint attribution 
 of the license allows. Other Slint licensing options, including GPL-3.0-only, are described by
 Slint itself.
 
-Release tarballs also include THIRD-PARTY-LICENSES.txt, covering the Rust crates linked into the
+Plaza embeds the Barlow and JetBrains Mono fonts, used under the SIL Open Font License 1.1
+(LICENSES/OFL-1.1-Barlow.txt, LICENSES/OFL-1.1-JetBrainsMono.txt).
+
+Release downloads also include THIRD-PARTY-LICENSES.txt, covering the Rust crates linked into the
 binary. tools/third-party-licenses.py regenerates it.
 
 Plaza's sounds are synthesized; it contains no samples. Its presets are inspired by classic 80s

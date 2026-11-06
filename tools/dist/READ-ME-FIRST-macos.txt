@@ -1,0 +1,25 @@
+Plaza for macOS (Apple Silicon and Intel, macOS 11 or newer)
+
+Install: drag Plaza into the Applications folder.
+
+First launch: Plaza isn't notarized by Apple yet, so macOS blocks the first open with
+"Plaza can't be opened because Apple cannot check it for malicious software" (or
+"Apple could not verify Plaza is free of malware").
+
+  macOS 14 and older: in Applications, right-click (or Control-click) Plaza, choose Open,
+  then click Open in the dialog.
+  macOS 15 and newer: double-click Plaza once and click Done. Then open System Settings >
+  Privacy & Security, scroll down to "Plaza was blocked", click Open Anyway, and confirm
+  with your password or Touch ID.
+
+macOS remembers the choice; after that Plaza opens normally.
+
+Turn your volume down before the first note: long reverb tails and stacked chords get loud fast.
+
+Keys: Z-M and Q-I play two octaves, [ ] or Left/Right change octave, Up/Down change preset,
+Tab toggles slow + pitch down, Esc releases every note. Cmd shortcuts (Cmd-Q, Cmd-H) work as
+usual. USB MIDI keyboards connect by themselves. Recordings (REC) go to Music/Plaza in your
+home folder; the music-note button opens it in Finder.
+
+Free and open source: https://github.com/nunyabiz765/plaza
+From Center Point Labs: https://centerpointlabs.dev/services/plaza/

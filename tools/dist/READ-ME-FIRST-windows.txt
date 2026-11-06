@@ -1,0 +1,19 @@
+Plaza for Windows
+
+Plaza is a portable app: unzip this folder anywhere (Documents, Desktop) and double-click
+Plaza.exe. Nothing is installed and no admin rights are needed. To remove it, delete the folder.
+
+First launch: Windows SmartScreen may say "Windows protected your PC". Plaza isn't code-signed
+yet, so Windows doesn't recognise the publisher. Click "More info", check that the app is
+Plaza.exe, then click "Run anyway". Windows remembers this for this copy.
+
+Turn your volume down before the first note: long reverb tails and stacked chords get loud fast.
+
+Keys: Z-M and Q-I play two octaves, [ ] or Left/Right change octave, Up/Down change preset,
+Tab toggles slow + pitch down, Esc releases every note. USB MIDI keyboards connect by themselves.
+Recordings (REC) go to your Music folder, in Music\Plaza. The music-note button opens it.
+
+Command line (from PowerShell or cmd in this folder): .\Plaza.exe --help
+
+Free and open source: https://github.com/nunyabiz765/plaza
+From Center Point Labs: https://centerpointlabs.dev/services/plaza/

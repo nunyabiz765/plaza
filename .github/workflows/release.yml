@@ -1,0 +1,95 @@
+# Builds Plaza for Linux, Windows and macOS. On a v* tag it uploads all three to that
+# tag's GitHub release, creating a draft release if there isn't one yet (publish it by
+# hand after checking). Existing assets are never replaced: an upload with a name that
+# is already there fails instead. Run it by hand (workflow_dispatch) to get the builds
+# as workflow artifacts only.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+    branches: [platforms]  # TEMP: test builds before merge
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: never
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    # Debian 12, so the binary asks for glibc 2.35+ like the v0.1.0 tarball.
+    container: debian:12
+    steps:
+      - name: System packages
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends build-essential pkg-config curl ca-certificates git \
+            python3 clang libclang-dev libasound2-dev libpipewire-0.3-dev libspa-0.2-dev libpulse-dev \
+            libfontconfig1-dev libfreetype6-dev libxkbcommon-dev
+      - uses: actions/checkout@v4
+      - name: Rust
+        run: |
+          curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - run: cargo test --release --locked
+      - run: cargo build --release --locked
+      - run: tools/package-linux.sh target/release/plaza dist
+      - uses: actions/upload-artifact@v4
+        with: { name: linux, path: dist/*, if-no-files-found: error }
+
+  windows:
+    runs-on: windows-latest
+    env:
+      # Static C runtime: Plaza.exe runs without the Visual C++ redistributable.
+      RUSTFLAGS: -C target-feature=+crt-static
+      PYTHON: python
+    defaults:
+      run: { shell: bash }
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install stable --profile minimal && rustup default stable
+      - run: cargo test --release --locked
+      - run: cargo build --release --locked
+      - run: tools/package-windows.sh target/release/plaza.exe dist
+      - uses: actions/upload-artifact@v4
+        with: { name: windows, path: dist/*, if-no-files-found: error }
+
+  macos:
+    runs-on: macos-latest
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          rustup toolchain install stable --profile minimal && rustup default stable
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - run: cargo test --release --locked
+      - run: cargo build --release --locked --target aarch64-apple-darwin
+      - run: cargo build --release --locked --target x86_64-apple-darwin
+      - run: |
+          tools/package-macos.sh target/aarch64-apple-darwin/release/plaza \
+            target/x86_64-apple-darwin/release/plaza dist
+      - uses: actions/upload-artifact@v4
+        with: { name: macos, path: dist/*, if-no-files-found: error }
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: dist, merge-multiple: true }
+      - run: ls -la dist
+      - name: Draft the release if the tag has none
+        run: gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --draft --verify-tag --title "Plaza ${TAG#v}" --notes "Linux, Windows and macOS builds. Notes to follow."
+      - name: Upload (fails rather than overwrite an existing asset)
+        run: gh release upload "$TAG" dist/*
