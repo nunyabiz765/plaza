@@ -60,6 +60,11 @@ export component AppWindow inherits Window {
 
     keys := FocusScope {
         key-pressed(e) => {
+            // Leave Ctrl/Cmd shortcuts (Cmd+Q, Cmd+W, Cmd+H...) to the system.
+            // Slint reports Cmd as control on macOS.
+            if (e.modifiers.control || e.modifiers.meta) {
+                return reject;
+            }
             if (e.text == Key.Escape) {
                 root.panic();
                 return accept;

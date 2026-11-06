@@ -15,12 +15,24 @@ name = "plaza"
 path = "src/main.rs"
 
 [dependencies]
-cpal = { version = "0.18", features = ["pipewire", "pulseaudio"] }
+cpal = "0.18"
 midir = "0.11"
 rtrb = "0.3"
-libc = "0.2"
 slint = { version = "1.18", default-features = false, features = ["std", "compat-1-2", "backend-winit", "renderer-femtovg", "renderer-software"] }
 
+# Linux: native PipeWire, falling back to PulseAudio, then ALSA. Windows gets WASAPI and
+# macOS CoreAudio from cpal's defaults.
+[target.'cfg(target_os = "linux")'.dependencies]
+cpal = { version = "0.18", features = ["pipewire", "pulseaudio"] }
+libc = "0.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+libc = "0.2"
+dirs = "6"
+
+[target.'cfg(windows)'.dependencies]
+dirs = "6"
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Console", "Win32_System_SystemInformation"] }
 
 [profile.release]
 opt-level = 3
@@ -35,3 +47,4 @@ opt-level = 3
 
 [build-dependencies]
 slint-build = "1.18"
+winresource = "0.1"

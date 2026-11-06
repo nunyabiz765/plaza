@@ -88,11 +88,28 @@ impl State {
     }
 }
 
+/// ~/Music/Plaza on Linux and macOS, the user's Music folder (FOLDERID_Music,
+/// so OneDrive redirection is honored) on Windows.
 fn music_dir() -> PathBuf {
-    let home = std::env::var_os("HOME").map(PathBuf::from).unwrap_or_else(|| PathBuf::from("."));
-    home.join("Music").join("Plaza")
+    #[cfg(target_os = "linux")]
+    let music = std::env::var_os("HOME").map(|h| PathBuf::from(h).join("Music"));
+    #[cfg(not(target_os = "linux"))]
+    let music = dirs::audio_dir().or_else(|| dirs::home_dir().map(|h| h.join("Music")));
+    music.unwrap_or_else(|| PathBuf::from(".")).join("Plaza")
 }
 
+/// Opens a folder or URL with the desktop's default handler.
+fn open_external(target: &std::ffi::OsStr) {
+    #[cfg(target_os = "macos")]
+    let cmd = "open";
+    #[cfg(windows)]
+    let cmd = "explorer";
+    #[cfg(not(any(target_os = "macos", windows)))]
+    let cmd = "xdg-open";
+    let _ = std::process::Command::new(cmd).arg(target).spawn();
+}
+
+#[cfg(unix)]
 fn timestamp() -> String {
     unsafe {
         let t = libc::time(std::ptr::null_mut());
@@ -108,6 +125,13 @@ fn timestamp() -> String {
             tm.tm_sec
         )
     }
+}
+
+#[cfg(windows)]
+fn timestamp() -> String {
+    let mut t: windows_sys::Win32::Foundation::SYSTEMTIME = unsafe { std::mem::zeroed() };
+    unsafe { windows_sys::Win32::System::SystemInformation::GetLocalTime(&mut t) };
+    format!("{:04}{:02}{:02}-{:02}{:02}{:02}", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond)
 }
 
 pub fn run(start_preset: Option<usize>, muted: bool) -> Result<(), slint::PlatformError> {
@@ -270,14 +294,14 @@ pub fn run(start_preset: Option<usize>, muted: bool) -> Result<(), slint::Platfo
     }
     {
         ui.on_open_source(move || {
-            let _ = std::process::Command::new("xdg-open").arg("https://github.com/nunyabiz765/plaza").spawn();
+            open_external("https://github.com/nunyabiz765/plaza".as_ref());
         });
     }
     {
         ui.on_open_recordings(move || {
             let dir = music_dir();
             let _ = std::fs::create_dir_all(&dir);
-            let _ = std::process::Command::new("xdg-open").arg(&dir).spawn();
+            open_external(dir.as_os_str());
         });
     }
     {

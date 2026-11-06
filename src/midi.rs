@@ -1,4 +1,5 @@
-//! USB MIDI input via midir (ALSA sequencer). Connects to the first real
+//! USB MIDI input via midir (ALSA sequencer on Linux, WinMM on Windows,
+//! CoreMIDI on macOS). Connects to the first real
 //! input port it finds; the UI rescans every few seconds for hot-plugging.
 
 use crate::audio::{send, Events};

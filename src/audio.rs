@@ -1,5 +1,6 @@
-//! Real-time output through cpal (native PipeWire, falling back to PulseAudio
-//! or ALSA). The callback owns the engine; nothing in it locks or allocates.
+//! Real-time output through cpal: native PipeWire on Linux (falling back to
+//! PulseAudio or ALSA), WASAPI on Windows, CoreAudio on macOS. The callback
+//! owns the engine; nothing in it locks or allocates.
 
 use plaza::engine::{Engine, Event};
 use plaza::scope::Scope;
@@ -202,6 +203,14 @@ fn flush_denormals() {
     unsafe {
         use std::arch::x86_64::{_mm_getcsr, _mm_setcsr};
         _mm_setcsr(_mm_getcsr() | 0x8040);
+    }
+    // Apple Silicon: FPCR.FZ (bit 24).
+    #[cfg(target_arch = "aarch64")]
+    unsafe {
+        let mut fpcr: u64;
+        std::arch::asm!("mrs {}, fpcr", out(reg) fpcr);
+        fpcr |= 1 << 24;
+        std::arch::asm!("msr fpcr, {}", in(reg) fpcr);
     }
 }
 

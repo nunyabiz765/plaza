@@ -1,3 +1,7 @@
+// Windows: a GUI app, so double-clicking doesn't open a console window too. The
+// command-line subcommands attach to the console they were started from.
+#![cfg_attr(windows, windows_subsystem = "windows")]
+
 mod app;
 mod audio;
 mod midi;
@@ -50,6 +54,11 @@ fn die(msg: impl std::fmt::Display) -> ! {
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    #[cfg(windows)]
+    if !args.is_empty() {
+        use windows_sys::Win32::System::Console::{AttachConsole, ATTACH_PARENT_PROCESS};
+        unsafe { AttachConsole(ATTACH_PARENT_PROCESS) };
+    }
     match args.first().map(String::as_str) {
         Some("render") => render(&args[1..]),
         Some("presets") => {
