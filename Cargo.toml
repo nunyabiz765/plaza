@@ -1,0 +1,37 @@
+[package]
+name = "plaza"
+version = "0.1.0"
+edition = "2021"
+description = "An 80s polysynth for vaporwave: ensemble chorus, lush reverb, tape"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+name = "plaza"
+path = "src/lib.rs"
+
+[[bin]]
+name = "plaza"
+path = "src/main.rs"
+
+[dependencies]
+cpal = { version = "0.18", features = ["pipewire", "pulseaudio"] }
+midir = "0.11"
+rtrb = "0.3"
+libc = "0.2"
+slint = { version = "1.18", default-features = false, features = ["std", "compat-1-2", "backend-winit", "renderer-femtovg", "renderer-software"] }
+
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = true
+
+[profile.dev]
+opt-level = 1
+
+[profile.test]
+opt-level = 3
+
+[build-dependencies]
+slint-build = "1.18"

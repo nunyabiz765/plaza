@@ -1,0 +1,19 @@
+Plaza
+Copyright (c) 2026 NICKSOSA.TECH LLC (Center Point Labs)
+Licensed under either of the Apache License, Version 2.0 (LICENSE-APACHE) or the MIT licence
+(LICENSE-MIT), at your option. That covers Plaza's own source code.
+
+Plaza is built with Slint (https://slint.dev), Copyright SixtyFPS GmbH, used under the Slint
+Royalty-free Desktop, Mobile, and Web Applications License, version 2.0 (a copy is in
+LICENSES/LicenseRef-Slint-Royalty-free-2.0.md). Slint is not covered by Plaza's MIT/Apache
+terms. As that license requires, the app shows the AboutSlint widget in its About dialog. If you
+distribute a modified build, keep that widget, or display the Slint attribution badge as section 2
+of the license allows. Other Slint licensing options, including GPL-3.0-only, are described by
+Slint itself.
+
+Release tarballs also include THIRD-PARTY-LICENSES.txt, covering the Rust crates linked into the
+binary. tools/third-party-licenses.py regenerates it.
+
+Plaza's sounds are synthesized; it contains no samples. Its presets are inspired by classic 80s
+polysynths and FM keyboards. Plaza is not affiliated with or endorsed by any instrument maker,
+and no instrument maker's trademarks are used in its preset names.

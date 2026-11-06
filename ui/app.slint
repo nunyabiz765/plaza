@@ -1,0 +1,504 @@
+import { AboutSlint, Palette } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { KnobData, Knob, Card, KnobRow, Pill, Seg, Keyboard } from "widgets.slint";
+
+export { KnobData }
+
+export component AppWindow inherits Window {
+    title: "Plaza";
+    icon: @image-url("../assets/plaza-64.png");
+    preferred-width: 1280px;
+    preferred-height: 780px;
+    min-width: 1200px;
+    min-height: 740px;
+    background: Theme.bg;
+    default-font-family: Theme.font;
+    forward-focus: keys;
+    init => { Palette.color-scheme = ColorScheme.light; }
+
+    in property <[KnobData]> osc;
+    in property <[KnobData]> fm;
+    in property <[KnobData]> filter;
+    in property <[KnobData]> fenv;
+    in property <[KnobData]> amp;
+    in property <[KnobData]> lfo;
+    in property <[KnobData]> reverb;
+    in property <[KnobData]> tape;
+    in property <[KnobData]> master;
+    in property <int> chorus-mode;
+    in property <[string]> preset-names;
+    in property <int> preset-index;
+    in property <string> preset-name;
+    in property <string> preset-blurb;
+    in property <bool> slow;
+    in property <string> slow-label;
+    in property <bool> recording;
+    in property <string> rec-label;
+    in property <string> scope-path: "M 0 60 L 600 60";
+    in property <float> level;
+    in property <string> status-audio;
+    in property <string> status-midi;
+    in property <string> status-note;
+    in property <int> octave;
+    in property <string> base-name;
+    in property <[bool]> held: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
+
+    callback knob(int, float);
+    callback knob-reset(int);
+    callback chorus(int);
+    callback preset-step(int);
+    callback preset-pick(int);
+    callback toggle-slow();
+    callback toggle-rec();
+    callback open-recordings();
+    callback open-source();
+    callback octave-step(int);
+    callback key-down(string, bool) -> bool;
+    callback key-up(string) -> bool;
+    callback mouse-note(int, bool);
+    callback panic();
+
+    keys := FocusScope {
+        key-pressed(e) => {
+            if (e.text == Key.Escape) {
+                root.panic();
+                return accept;
+            }
+            if (e.text == Key.LeftArrow || e.text == "[") {
+                if (!e.repeat) { root.octave-step(-1); }
+                return accept;
+            }
+            if (e.text == Key.RightArrow || e.text == "]") {
+                if (!e.repeat) { root.octave-step(1); }
+                return accept;
+            }
+            if (e.text == Key.UpArrow) {
+                if (!e.repeat) { root.preset-step(-1); }
+                return accept;
+            }
+            if (e.text == Key.DownArrow) {
+                if (!e.repeat) { root.preset-step(1); }
+                return accept;
+            }
+            if (e.text == Key.Tab) {
+                if (!e.repeat) { root.toggle-slow(); }
+                return accept;
+            }
+            if (root.key-down(e.text, e.repeat)) {
+                return accept;
+            }
+            reject
+        }
+        key-released(e) => {
+            if (root.key-up(e.text)) {
+                return accept;
+            }
+            reject
+        }
+
+        VerticalLayout {
+            padding: 0px;
+            spacing: 0px;
+
+            // ---------------------------------------------------------- header
+            Rectangle {
+                height: 64px;
+                background: Theme.sunset;
+                HorizontalLayout {
+                    padding-left: 18px;
+                    padding-right: 18px;
+                    spacing: 12px;
+                    alignment: space-between;
+
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: start;
+                        Image {
+                            source: @image-url("../assets/plaza.svg");
+                            width: 42px;
+                            height: 42px;
+                            y: 11px;
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: -2px;
+                            Text {
+                                text: "PLAZA";
+                                font-size: 26px;
+                                font-weight: 700;
+                                letter-spacing: 9px;
+                                color: Theme.ink;
+                            }
+                            Text {
+                                text: "POLYSYNTH  ·  EST. 1986";
+                                font-size: 10px;
+                                font-weight: 600;
+                                letter-spacing: 3px;
+                                color: #7a5878;
+                            }
+                        }
+                    }
+
+                    // Preset picker.
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 6px;
+                        padding-top: 17px;
+                        padding-bottom: 17px;
+                        Pill { text: "‹"; min-w: 34px; clicked => { root.preset-step(-1); } }
+                        Rectangle {
+                            width: 250px;
+                            height: 30px;
+                            border-radius: 15px;
+                            background: pta.has-hover ? #ffffffee : #ffffffbb;
+                            HorizontalLayout {
+                                padding-left: 14px;
+                                padding-right: 12px;
+                                Text {
+                                    text: root.preset-name;
+                                    font-size: 15px;
+                                    font-weight: 700;
+                                    color: Theme.ink;
+                                    vertical-alignment: center;
+                                    overflow: elide;
+                                }
+                                Text {
+                                    text: "▾";
+                                    color: Theme.soft;
+                                    vertical-alignment: center;
+                                    horizontal-alignment: right;
+                                }
+                            }
+                            pta := TouchArea { clicked => { menu.show(); } }
+                        }
+                        Pill { text: "›"; min-w: 34px; clicked => { root.preset-step(1); } }
+                    }
+
+                    HorizontalLayout {
+                        alignment: end;
+                        spacing: 8px;
+                        padding-top: 17px;
+                        padding-bottom: 17px;
+                        Pill {
+                            text: root.slow ? "SLOWED  " + root.slow-label : "SLOW + PITCH DOWN";
+                            on: root.slow;
+                            tint: Theme.lavender;
+                            clicked => { root.toggle-slow(); }
+                        }
+                        Pill {
+                            text: root.recording ? "●  " + root.rec-label : "●  REC";
+                            on: root.recording;
+                            tint: Theme.rec;
+                            clicked => { root.toggle-rec(); }
+                        }
+                        Pill { text: "♫"; min-w: 34px; clicked => { root.open-recordings(); } }
+                        Pill { text: "ⓘ"; min-w: 34px; clicked => { about.show(); } }
+                    }
+                }
+            }
+
+            // ---------------------------------------------------------- body
+            VerticalLayout {
+                padding: 14px;
+                spacing: 12px;
+
+                Text {
+                    text: root.preset-blurb;
+                    font-size: 13px;
+                    color: Theme.soft;
+                    height: 16px;
+                }
+
+                HorizontalLayout {
+                    spacing: 12px;
+                    Card {
+                        title: "SCOPE";
+                        chip: Theme.lavender;
+                        horizontal-stretch: 1;
+                        min-width: 240px;
+                        Rectangle {
+                            height: 92px;
+                            border-radius: 9px;
+                            background: Theme.scope-bg;
+                            clip: true;
+                            for i in 7: Rectangle {
+                                x: (i + 1) * parent.width / 8;
+                                width: 1px;
+                                background: Theme.scope-grid;
+                            }
+                            Rectangle { y: parent.height / 2; height: 1px; background: Theme.scope-grid; }
+                            Path {
+                                width: parent.width;
+                                height: parent.height;
+                                viewbox-width: 600;
+                                viewbox-height: 120;
+                                commands: root.scope-path;
+                                stroke: Theme.pink;
+                                stroke-width: 2px;
+                            }
+                            // Output level.
+                            Rectangle {
+                                x: 6px;
+                                y: parent.height - 8px;
+                                height: 3px;
+                                width: (parent.width - 12px) * min(1, root.level);
+                                border-radius: 1.5px;
+                                background: root.level > 0.95 ? Theme.rec : Theme.teal;
+                            }
+                        }
+                    }
+                    Card {
+                        title: "OSCILLATORS";
+                        chip: Theme.pink;
+                        KnobRow {
+                            knobs: root.osc;
+                            tint: Theme.pink;
+                            changed(i, v) => { root.knob(i, v); }
+                            reset(i) => { root.knob-reset(i); }
+                        }
+                    }
+                    Card {
+                        title: "FM  ·  2-OP";
+                        chip: Theme.gold;
+                        KnobRow {
+                            knobs: root.fm;
+                            tint: Theme.gold;
+                            changed(i, v) => { root.knob(i, v); }
+                            reset(i) => { root.knob-reset(i); }
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 12px;
+                    Card {
+                        title: "LADDER FILTER";
+                        chip: Theme.peach;
+                        KnobRow {
+                            knobs: root.filter;
+                            tint: Theme.peach;
+                            changed(i, v) => { root.knob(i, v); }
+                            reset(i) => { root.knob-reset(i); }
+                        }
+                    }
+                    Card {
+                        title: "FILTER ENV";
+                        chip: Theme.peach;
+                        KnobRow {
+                            knobs: root.fenv;
+                            tint: Theme.peach;
+                            changed(i, v) => { root.knob(i, v); }
+                            reset(i) => { root.knob-reset(i); }
+                        }
+                    }
+                    Card {
+                        title: "AMP ENV";
+                        chip: Theme.pink;
+                        KnobRow {
+                            knobs: root.amp;
+                            tint: Theme.pink;
+                            changed(i, v) => { root.knob(i, v); }
+                            reset(i) => { root.knob-reset(i); }
+                        }
+                    }
+                    Card {
+                        title: "LFO";
+                        chip: Theme.lavender;
+                        horizontal-stretch: 1;
+                        KnobRow {
+                            knobs: root.lfo;
+                            tint: Theme.lavender;
+                            changed(i, v) => { root.knob(i, v); }
+                            reset(i) => { root.knob-reset(i); }
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 12px;
+                    Card {
+                        title: "CHORUS";
+                        chip: Theme.teal;
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 8px;
+                            padding-top: 6px;
+                            Seg {
+                                options: ["Off", "I", "II", "I+II"];
+                                selected: root.chorus-mode;
+                                picked(i) => { root.chorus(i); }
+                            }
+                            Text {
+                                text: root.chorus-mode == 0 ? "dry" : root.chorus-mode == 1 ? "0.5 Hz · wide" : root.chorus-mode == 2 ? "0.9 Hz · deeper" : "9.8 Hz · shimmer";
+                                font-family: Theme.mono;
+                                font-size: 10px;
+                                color: Theme.soft;
+                                horizontal-alignment: center;
+                            }
+                        }
+                    }
+                    Card {
+                        title: "REVERB";
+                        chip: Theme.teal;
+                        KnobRow {
+                            knobs: root.reverb;
+                            tint: Theme.teal;
+                            changed(i, v) => { root.knob(i, v); }
+                            reset(i) => { root.knob-reset(i); }
+                        }
+                    }
+                    Card {
+                        title: "TAPE";
+                        chip: Theme.lavender;
+                        KnobRow {
+                            knobs: root.tape;
+                            tint: Theme.lavender;
+                            changed(i, v) => { root.knob(i, v); }
+                            reset(i) => { root.knob-reset(i); }
+                        }
+                    }
+                    Card {
+                        title: "MASTER";
+                        chip: Theme.gold;
+                        horizontal-stretch: 1;
+                        KnobRow {
+                            knobs: root.master;
+                            tint: Theme.gold;
+                            changed(i, v) => { root.knob(i, v); }
+                            reset(i) => { root.knob-reset(i); }
+                        }
+                    }
+                }
+
+                // Keyboard + octave.
+                HorizontalLayout {
+                    spacing: 12px;
+                    vertical-stretch: 1;
+                    min-height: 120px;
+                    VerticalLayout {
+                        width: 92px;
+                        alignment: center;
+                        spacing: 6px;
+                        Text {
+                            text: "OCTAVE";
+                            font-size: 11px;
+                            font-weight: 700;
+                            letter-spacing: 2px;
+                            color: Theme.soft;
+                            horizontal-alignment: center;
+                        }
+                        Text {
+                            text: root.octave;
+                            font-size: 30px;
+                            font-weight: 700;
+                            color: Theme.ink;
+                            horizontal-alignment: center;
+                        }
+                        HorizontalLayout {
+                            spacing: 6px;
+                            alignment: center;
+                            Pill { text: "−"; min-w: 36px; clicked => { root.octave-step(-1); } }
+                            Pill { text: "+"; min-w: 36px; clicked => { root.octave-step(1); } }
+                        }
+                    }
+                    Keyboard {
+                        held: root.held;
+                        base-name: root.base-name;
+                        note(s, on) => { root.mouse-note(s, on); }
+                    }
+                }
+            }
+
+            // ---------------------------------------------------------- status
+            Rectangle {
+                height: 30px;
+                background: #f1e3d6;
+                HorizontalLayout {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    spacing: 18px;
+                    Text { text: root.status-audio; font-family: Theme.mono; font-size: 11px; color: Theme.soft; vertical-alignment: center; }
+                    Text { text: root.status-midi; font-family: Theme.mono; font-size: 11px; color: Theme.soft; vertical-alignment: center; }
+                    Text { text: root.status-note; font-family: Theme.mono; font-size: 11px; color: Theme.soft; vertical-alignment: center; horizontal-stretch: 1; }
+                    Text {
+                        text: "Z–M, Q–I play  ·  [ ] octave  ·  ↑↓ preset  ·  Tab slow  ·  Esc all notes off";
+                        font-size: 12px;
+                        color: Theme.soft;
+                        vertical-alignment: center;
+                        horizontal-alignment: right;
+                    }
+                }
+            }
+        }
+    }
+
+    menu := PopupWindow {
+        x: (root.width - 280px) / 2;
+        y: 52px;
+        width: 280px;
+        Rectangle {
+            background: Theme.card;
+            border-radius: 12px;
+            border-width: 1px;
+            border-color: Theme.line;
+            drop-shadow-blur: 14px;
+            drop-shadow-color: #4a2f5233;
+            VerticalLayout {
+                padding: 6px;
+                for name[i] in root.preset-names: Rectangle {
+                    height: 30px;
+                    border-radius: 8px;
+                    background: i == root.preset-index ? Theme.pink : (ita.has-hover ? #fde8ee : transparent);
+                    Text {
+                        x: 12px;
+                        text: name;
+                        font-size: 14px;
+                        font-weight: 600;
+                        color: i == root.preset-index ? #fffaf4 : Theme.ink;
+                        vertical-alignment: center;
+                        height: parent.height;
+                    }
+                    ita := TouchArea { clicked => { root.preset-pick(i); } }
+                }
+            }
+        }
+    }
+
+    about := PopupWindow {
+        x: (root.width - 420px) / 2;
+        y: (root.height - 360px) / 2;
+        width: 420px;
+        Rectangle {
+            background: Theme.card;
+            border-radius: 14px;
+            border-width: 1px;
+            border-color: Theme.line;
+            drop-shadow-blur: 18px;
+            drop-shadow-color: #4a2f5233;
+            VerticalLayout {
+                padding: 22px;
+                spacing: 12px;
+                Text {
+                    text: "PLAZA 0.1.0";
+                    font-size: 20px;
+                    font-weight: 700;
+                    letter-spacing: 6px;
+                    color: Theme.ink;
+                }
+                Text {
+                    text: "An 80s-style polysynth for vaporwave. Free and open source, MIT OR Apache-2.0. Center Point Labs by nicksosa.tech LLC.";
+                    font-size: 13px;
+                    color: Theme.soft;
+                    wrap: word-wrap;
+                }
+                AboutSlint { }
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: end;
+                    Pill { text: "SOURCE CODE ↗"; clicked => { root.open-source(); } }
+                    Pill { text: "CLOSE"; on: true; clicked => { about.close(); } }
+                }
+            }
+        }
+    }
+}

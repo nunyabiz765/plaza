@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Plaza
+GenericName=Synthesizer
+Comment=80s polysynth for vaporwave: ensemble chorus, lush reverb, tape
+Exec=@BIN@
+Icon=plaza
+Terminal=false
+Categories=AudioVideo;Audio;Music;Midi;
+Keywords=synth;synthesizer;vaporwave;chorus;fm;midi;
+StartupWMClass=plaza

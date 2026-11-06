@@ -1,0 +1,320 @@
+import { Theme } from "theme.slint";
+
+export struct KnobData {
+    pid: int,
+    label: string,
+    value: float,
+    display: string,
+}
+
+// Drag up/down (or scroll) to turn; double-click resets to the default.
+// The knob never edits its own value: it reports, Rust updates the model.
+export component Knob inherits Rectangle {
+    in property <KnobData> data;
+    in property <color> tint: Theme.pink;
+    callback changed(int, float);
+    callback reset(int);
+    width: 60px;
+    height: 84px;
+
+    property <float> start: 0;
+    property <angle> a: 135deg + 270deg * data.value;
+
+    face := Rectangle {
+        x: 9px;
+        y: 4px;
+        width: 42px;
+        height: 42px;
+        // Track arc and value arc.
+        Path {
+            x: -5px;
+            y: -5px;
+            width: 52px;
+            height: 52px;
+            viewbox-width: 100;
+            viewbox-height: 100;
+            stroke: Theme.track;
+            stroke-width: 4.5px;
+            MoveTo {
+                x: 50 + 44 * cos(135deg);
+                y: 50 + 44 * sin(135deg);
+            }
+            ArcTo {
+                x: 50 + 44 * cos(45deg);
+                y: 50 + 44 * sin(45deg);
+                radius-x: 44;
+                radius-y: 44;
+                large-arc: true;
+                sweep: true;
+            }
+        }
+        if data.value > 0.004: Path {
+            x: -5px;
+            y: -5px;
+            width: 52px;
+            height: 52px;
+            viewbox-width: 100;
+            viewbox-height: 100;
+            stroke: root.tint;
+            stroke-width: 4.5px;
+            MoveTo {
+                x: 50 + 44 * cos(135deg);
+                y: 50 + 44 * sin(135deg);
+            }
+            ArcTo {
+                x: 50 + 44 * cos(root.a);
+                y: 50 + 44 * sin(root.a);
+                radius-x: 44;
+                radius-y: 44;
+                large-arc: data.value * 270 > 180;
+                sweep: true;
+            }
+        }
+        Rectangle {
+            x: 6px;
+            y: 6px;
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
+            background: ta.pressed || ta.has-hover ? #fff3ea : Theme.key-white;
+            border-width: 1px;
+            border-color: Theme.line;
+            drop-shadow-blur: 3px;
+            drop-shadow-offset-y: 1px;
+            drop-shadow-color: #4a2f5222;
+        }
+        // Pointer dot.
+        Rectangle {
+            width: 5px;
+            height: 5px;
+            border-radius: 2.5px;
+            x: 21px + 9px * cos(root.a) - 2.5px;
+            y: 21px + 9px * sin(root.a) - 2.5px;
+            background: root.tint;
+        }
+    }
+
+    Text {
+        y: 50px;
+        width: parent.width;
+        horizontal-alignment: center;
+        text: data.label;
+        font-family: Theme.font;
+        font-size: 12px;
+        font-weight: 600;
+        color: Theme.ink;
+    }
+    Text {
+        y: 66px;
+        width: parent.width;
+        horizontal-alignment: center;
+        text: data.display;
+        font-family: Theme.mono;
+        font-size: 10px;
+        color: ta.pressed ? root.tint : Theme.soft;
+    }
+
+    ta := TouchArea {
+        mouse-cursor: ns-resize;
+        pointer-event(e) => {
+            if (e.kind == PointerEventKind.down) {
+                root.start = data.value;
+            }
+        }
+        moved => {
+            if (self.pressed) {
+                root.changed(data.pid, clamp(root.start + (self.pressed-y - self.mouse-y) / 160px, 0, 1));
+            }
+        }
+        double-clicked => {
+            root.reset(data.pid);
+        }
+        scroll-event(e) => {
+            root.changed(data.pid, clamp(data.value + e.delta-y / 1500px, 0, 1));
+            accept
+        }
+    }
+}
+
+export component Card inherits Rectangle {
+    in property <string> title;
+    in property <color> chip: Theme.pink;
+    background: Theme.card;
+    border-radius: 14px;
+    border-width: 1px;
+    border-color: Theme.line;
+    drop-shadow-blur: 8px;
+    drop-shadow-offset-y: 2px;
+    drop-shadow-color: #b06a5014;
+    VerticalLayout {
+        padding: 10px;
+        padding-top: 8px;
+        spacing: 4px;
+        HorizontalLayout {
+            spacing: 6px;
+            alignment: start;
+            Rectangle {
+                width: 8px;
+                height: 8px;
+                y: 5px;
+                border-radius: 4px;
+                background: root.chip;
+            }
+            Text {
+                text: root.title;
+                font-family: Theme.font;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 2px;
+                color: Theme.soft;
+            }
+        }
+        @children
+    }
+}
+
+export component KnobRow inherits HorizontalLayout {
+    in property <[KnobData]> knobs;
+    in property <color> tint;
+    callback changed(int, float);
+    callback reset(int);
+    spacing: 0px;
+    alignment: start;
+    for k in root.knobs: Knob {
+        data: k;
+        tint: root.tint;
+        changed(i, v) => {
+            root.changed(i, v);
+        }
+        reset(i) => {
+            root.reset(i);
+        }
+    }
+}
+
+// A pill-shaped toggle/button that never takes keyboard focus, so typing
+// keeps playing notes after you click it.
+export component Pill inherits Rectangle {
+    in property <string> text;
+    in property <bool> on;
+    in property <color> tint: Theme.pink;
+    in property <length> min-w: 0px;
+    callback clicked;
+    height: 30px;
+    min-width: max(root.min-w, label.preferred-width + 24px);
+    border-radius: 15px;
+    background: root.on ? root.tint : (ta.has-hover ? #ffffffcc : #ffffff99);
+    border-width: 1px;
+    border-color: root.on ? root.tint : #ffffffdd;
+    label := Text {
+        text: root.text;
+        font-family: Theme.font;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: root.on ? #fffaf4 : Theme.ink;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    ta := TouchArea {
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+export component Seg inherits Rectangle {
+    in property <[string]> options;
+    in property <int> selected;
+    in property <color> tint: Theme.teal;
+    callback picked(int);
+    height: 30px;
+    border-radius: 9px;
+    background: Theme.track;
+    HorizontalLayout {
+        padding: 2px;
+        spacing: 2px;
+        for o[i] in root.options: Rectangle {
+            border-radius: 7px;
+            background: i == root.selected ? root.tint : (sta.has-hover ? #ffffffaa : transparent);
+            min-width: 38px;
+            Text {
+                text: o;
+                font-family: Theme.font;
+                font-size: 13px;
+                font-weight: 700;
+                color: i == root.selected ? #fffaf4 : Theme.ink;
+            }
+            sta := TouchArea {
+                clicked => {
+                    root.picked(i);
+                }
+            }
+        }
+    }
+}
+
+// Two octaves plus the top C, labelled with the computer keys that play them.
+export component Keyboard inherits Rectangle {
+    in property <[bool]> held;
+    in property <string> base-name;
+    callback note(int, bool);
+    property <[int]> whites: [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21, 23, 24];
+    property <[int]> blacks: [1, 3, 6, 8, 10, 13, 15, 18, 20, 22];
+    // Index of the white key each black key sits after.
+    property <[int]> black-after: [0, 1, 3, 4, 5, 7, 8, 10, 11, 12];
+    property <[string]> labels: ["Z", "S", "X", "D", "C", "V", "G", "B", "H", "N", "J", "M", "Q", "2", "W", "3", "E", "R", "5", "T", "6", "Y", "7", "U", "I"];
+    property <length> ww: self.width / 15;
+    border-radius: 12px;
+    background: Theme.line;
+    clip: true;
+
+    for s[i] in root.whites: Rectangle {
+        x: i * root.ww + 1px;
+        y: 0px;
+        width: root.ww - 2px;
+        height: root.height;
+        border-radius: 6px;
+        background: root.held[s] ? Theme.pink : (wta.pressed ? #ffe4ec : Theme.key-white);
+        Text {
+            y: parent.height - 24px;
+            text: root.labels[s];
+            font-family: Theme.mono;
+            font-size: 11px;
+            color: root.held[s] ? #fffaf4 : Theme.faint;
+        }
+        if s == 0: Text {
+            y: parent.height - 42px;
+            text: root.base-name;
+            font-family: Theme.font;
+            font-size: 11px;
+            font-weight: 700;
+            color: root.held[s] ? #fffaf4 : Theme.soft;
+        }
+        wta := TouchArea {
+            changed pressed => {
+                root.note(s, self.pressed);
+            }
+        }
+    }
+    for s[i] in root.blacks: Rectangle {
+        x: (root.black-after[i] + 1) * root.ww - root.ww * 0.31;
+        y: 0px;
+        width: root.ww * 0.62;
+        height: root.height * 0.6;
+        border-radius: 5px;
+        background: root.held[s] ? Theme.pink : (bta.pressed ? #8a6a92 : Theme.key-black);
+        Text {
+            y: parent.height - 22px;
+            text: root.labels[s];
+            font-family: Theme.mono;
+            font-size: 11px;
+            color: #e9dcef;
+        }
+        bta := TouchArea {
+            changed pressed => {
+                root.note(s, self.pressed);
+            }
+        }
+    }
+}
