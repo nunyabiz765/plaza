@@ -20,9 +20,44 @@ const fn n(start: f32, len: f32, note: u8, vel: f32) -> Note {
 const CHORDS: [[u8; 5]; 4] = [[53, 57, 60, 64, 67], [52, 55, 59, 62, 0], [50, 53, 57, 60, 64], [48, 55, 59, 64, 0]];
 const ROOTS: [u8; 4] = [41, 40, 38, 36];
 
-pub const PHRASES: &[&str] = &["chords", "keys", "melody", "stabs", "bass", "scale"];
+// Sound pack 1 demos, 8 bars in D minor: Dm9 - Bbmaj7 - Fadd9 - Csus2 - Gm9 - Bbmaj9 - Fmaj7 - Asus4.
+// Mid-register voicings; the bass parts supply the roots.
+const PACK_CHORDS: [[u8; 4]; 8] = [
+    [53, 57, 62, 64],
+    [53, 57, 62, 65],
+    [55, 57, 60, 65],
+    [55, 60, 62, 67],
+    [53, 57, 58, 62],
+    [53, 57, 60, 62],
+    [52, 57, 60, 64],
+    [52, 57, 62, 64],
+];
 
+/// A bass written to be played high, as the tune: eighth notes, one bar per row.
+const HI_BASS: [[u8; 8]; 8] = [
+    [50, 50, 57, 50, 62, 60, 57, 55],
+    [46, 46, 53, 46, 58, 57, 53, 50],
+    [53, 53, 60, 53, 65, 64, 60, 57],
+    [48, 48, 55, 48, 60, 62, 64, 67],
+    [55, 55, 62, 55, 65, 62, 58, 57],
+    [58, 57, 53, 50, 58, 60, 62, 65],
+    [65, 64, 60, 57, 64, 60, 57, 53],
+    [57, 57, 64, 57, 62, 64, 57, 52],
+];
+
+pub const PHRASES: &[&str] = &[
+    "chords", "keys", "melody", "stabs", "bass", "scale", "pads8", "seq16", "hibass", "topline", "stabs8", "strings8",
+];
+
+/// A phrase by name. `NAME*N` plays it N times back to back (whole bars).
 pub fn phrase(name: &str) -> Option<Vec<Note>> {
+    if let Some((base, times)) = name.split_once('*') {
+        let times: usize = times.parse().ok().filter(|t| (1..=16).contains(t))?;
+        let one = phrase(base)?;
+        let end = one.iter().fold(0f32, |m, nt| m.max(nt.start + nt.len));
+        let bars = (end / 4.0).ceil().max(1.0) * 4.0;
+        return Some((0..times).flat_map(|i| one.iter().map(move |nt| Note { start: nt.start + i as f32 * bars, ..*nt })).collect());
+    }
     let mut v = Vec::new();
     match name {
         "chords" => {
@@ -75,6 +110,75 @@ pub fn phrase(name: &str) -> Option<Vec<Note>> {
         "scale" => {
             for (i, k) in [60u8, 62, 64, 65, 67, 69, 71, 72].iter().enumerate() {
                 v.push(n(i as f32 * 0.5, 0.45, *k, 0.7));
+            }
+        }
+        "pads8" => {
+            for (bar, chord) in PACK_CHORDS.iter().enumerate() {
+                for (i, &k) in chord.iter().enumerate() {
+                    v.push(n(bar as f32 * 4.0 + i as f32 * 0.01, 3.95, k, 0.72));
+                }
+            }
+        }
+        "strings8" => {
+            // Legato: each chord overlaps the next a touch, top voice doubled an octave up.
+            for (bar, chord) in PACK_CHORDS.iter().enumerate() {
+                let len = if bar == 7 { 3.9 } else { 4.1 };
+                for &k in chord {
+                    v.push(n(bar as f32 * 4.0, len, k, 0.65));
+                }
+                v.push(n(bar as f32 * 4.0, len, chord[3] + 12, 0.6));
+            }
+        }
+        "seq16" => {
+            // Sixteenths over the chord an octave up; accents on the beat, lighter offbeats.
+            const PAT: [usize; 16] = [0, 2, 1, 3, 2, 4, 3, 1, 0, 2, 1, 3, 4, 3, 2, 1];
+            for (bar, chord) in PACK_CHORDS.iter().enumerate() {
+                let tones = [chord[0] + 12, chord[1] + 12, chord[2] + 12, chord[3] + 12, chord[0] + 24];
+                for (i, &ix) in PAT.iter().enumerate() {
+                    let vel = match i % 4 {
+                        0 => 0.95,
+                        2 => 0.75,
+                        _ => 0.6,
+                    };
+                    v.push(n(bar as f32 * 4.0 + i as f32 * 0.25, 0.2, tones[ix], vel));
+                }
+            }
+        }
+        "hibass" => {
+            for (bar, row) in HI_BASS.iter().enumerate() {
+                for (i, &k) in row.iter().enumerate() {
+                    let vel = if i % 2 == 0 { 0.9 } else { 0.7 };
+                    v.push(n(bar as f32 * 4.0 + i as f32 * 0.5, 0.42, k, vel));
+                }
+            }
+        }
+        "topline" => {
+            let line = [
+                (0.0, 2.0, 81), (2.0, 1.0, 77), (3.0, 1.0, 76),
+                (4.0, 3.0, 74), (7.0, 1.0, 77),
+                (8.0, 1.5, 76), (9.5, 0.5, 77), (10.0, 2.0, 72),
+                (12.0, 2.0, 74), (14.0, 2.0, 76),
+                (16.0, 2.0, 77), (18.0, 1.0, 74), (19.0, 1.0, 72),
+                (20.0, 3.0, 74), (23.0, 1.0, 72),
+                (24.0, 1.5, 69), (25.5, 0.5, 72), (26.0, 2.0, 76),
+                (28.0, 3.9, 76),
+            ];
+            for (s, l, k) in line {
+                v.push(n(s, l, k, 0.8));
+            }
+        }
+        "stabs8" => {
+            for (bar, chord) in PACK_CHORDS.iter().enumerate() {
+                let b = bar as f32 * 4.0;
+                let mut hits = vec![(0.0, 0.95), (1.5, 0.8), (3.0, 0.85)];
+                if bar % 2 == 1 {
+                    hits.push((3.5, 0.7));
+                }
+                for (at, vel) in hits {
+                    for &k in chord {
+                        v.push(n(b + at, 0.3, k + 12, vel));
+                    }
+                }
             }
         }
         _ => return None,
@@ -161,6 +265,18 @@ mod tests {
                 assert!((-32.0..-8.0).contains(&rms_db), "{} slow={slow} rms {rms_db:.1} dBFS peak {peak}", p.name);
             }
         }
+    }
+
+    #[test]
+    fn phrases_exist_and_repeat() {
+        for &name in PHRASES {
+            assert!(!phrase(name).unwrap().is_empty(), "{name}");
+        }
+        let one = phrase("seq16").unwrap();
+        let two = phrase("seq16*2").unwrap();
+        assert_eq!(two.len(), one.len() * 2);
+        assert_eq!(two[one.len()].start, 32.0);
+        assert!(phrase("seq16*0").is_none() && phrase("nope*2").is_none());
     }
 
     #[test]

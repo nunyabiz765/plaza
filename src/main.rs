@@ -31,7 +31,8 @@ RENDER OPTIONS
   --slow        Slow + pitch down (also stretches the timing, like a slowed record)
   --rate N      Sample rate (default 48000)
   --tail S      Seconds of release tail (default 4)
-  Phrases: chords keys melody stabs bass scale. Several layers are summed:
+  Phrases: chords keys melody stabs bass scale pads8 seq16 hibass topline stabs8 strings8
+  (NAME*N repeats a phrase N times). Several layers are summed:
     plaza render -o mall.wav --slow 'Mall Atrium=chords' 'Glass Lead=melody'
 
 KEYS (in the window)
