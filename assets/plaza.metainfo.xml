@@ -37,11 +37,13 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
-    <release version="0.1.2" date="2026-11-06">
+    <release version="0.1.3" date="2026-11-07">
       <description>
         <p>A .deb package for Ubuntu, Zorin OS, Linux Mint and Pop!_OS. Linux sound now goes through PulseAudio or PipeWire's PulseAudio service, so Plaza also starts on Ubuntu 22.04 and the distros built on it.</p>
+        <p>Sound Pack 1: six mid-80s synth-pop presets, Glasshouse Poly, Night Bus Seq, Towpath Bass, Redbrick Strings, Overcast Brass and Platform Bell.</p>
       </description>
     </release>
+    <release version="0.1.2" date="2026-11-06"/>
     <release version="0.1.1" date="2026-11-06"/>
     <release version="0.1.0" date="2026-11-06"/>
   </releases>

@@ -50,6 +50,17 @@ Parameters glide over about 15 ms, so turning knobs or switching presets doesn't
 | **Cassette Keys** | Pulse + FM keys through a cheap sampler and a worn tape |
 | **Sunset Bass** | Sub-heavy round bass with a soft pluck |
 
+**Sound Pack 1** (since 0.1.3): mid-80s drum-machine synth-pop. Bright, chorused, sequenced.
+
+| | |
+|---|---|
+| **Glasshouse Poly** | Two wide-detuned saws and a thin pulse through chorus II; bright, glassy chords |
+| **Night Bus Seq** | Short resonant pluck for 16th-note sequences; velocity opens the filter |
+| **Towpath Bass** | A bass voice built to play the tune up high: bright saw, chorus I, some bite |
+| **Redbrick Strings** | String-machine ensemble: wide saws, slow PWM and the I+II shimmer |
+| **Overcast Brass** | Hard, bright poly stab: detuned saws, a fast filter blip, a little drive |
+| **Platform Bell** | Digital FM bell at 7:1 over a thin pulse, for countermelodies |
+
 Double-click any knob to return it to the preset's value.
 
 ## Playing
@@ -70,7 +81,7 @@ lower octave    upper octave
 
 ## Audio
 
-On Linux, Plaza talks to the sound server over PulseAudio's protocol, which PipeWire also serves (pipewire-pulse, standard on Ubuntu 24.04 and most current desktops), falling back to ALSA. Since 0.1.2 it no longer links libpipewire, whose Ubuntu 22.04 version is too old for cpal's native PipeWire host. Windows uses WASAPI (shared mode) and macOS CoreAudio, each on the system's default output device. It asks for a 256-frame buffer (5.3 ms at 48 kHz) so the keys feel immediate; if the server refuses, it falls back to the server's default. `PLAZA_BUFFER=512 plaza` picks another size, and `PLAZA_BUFFER=0` uses the server default. The audio callback doesn't lock or allocate, and it turns on flush-to-zero so decaying tails can't cause denormal CPU spikes. The status bar shows the buffer size, worst-case DSP load, active voices, and xruns if any happen.
+On Linux, Plaza talks to the sound server over PulseAudio's protocol, which PipeWire also serves (pipewire-pulse, standard on Ubuntu 24.04 and most current desktops), falling back to ALSA. Since 0.1.3 it no longer links libpipewire, whose Ubuntu 22.04 version is too old for cpal's native PipeWire host. Windows uses WASAPI (shared mode) and macOS CoreAudio, each on the system's default output device. It asks for a 256-frame buffer (5.3 ms at 48 kHz) so the keys feel immediate; if the server refuses, it falls back to the server's default. `PLAZA_BUFFER=512 plaza` picks another size, and `PLAZA_BUFFER=0` uses the server default. The audio callback doesn't lock or allocate, and it turns on flush-to-zero so decaying tails can't cause denormal CPU spikes. The status bar shows the buffer size, worst-case DSP load, active voices, and xruns if any happen.
 
 ## Command line
 
@@ -91,30 +102,30 @@ plaza bench                           # offline DSP speed
 
 ### Windows 10/11 (x86_64)
 
-Download `plaza-0.1.2-windows-x86_64.zip` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), unzip it anywhere and double-click `Plaza.exe`. It's portable: nothing is installed, no admin rights are needed, and deleting the folder removes it.
+Download `plaza-0.1.3-windows-x86_64.zip` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), unzip it anywhere and double-click `Plaza.exe`. It's portable: nothing is installed, no admin rights are needed, and deleting the folder removes it.
 
 Plaza isn't code-signed yet, so the first launch shows SmartScreen's **"Windows protected your PC"**. Click **More info**, check the app is `Plaza.exe`, then **Run anyway**.
 
 ### macOS 11 or newer (Apple Silicon and Intel)
 
-Download `plaza-0.1.2-macos-universal.dmg` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), open it and drag Plaza into Applications.
+Download `plaza-0.1.3-macos-universal.dmg` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), open it and drag Plaza into Applications.
 
 Plaza is signed with a Developer ID and notarized by Apple (since 0.1.2), so it opens like any other downloaded app.
 
 ### Ubuntu, Zorin OS, Linux Mint, Pop!_OS (.deb)
 
-Download `plaza_0.1.2_amd64.deb` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest) and double-click it. The Software app (or Mint's package installer) opens; click **Install** and enter your password. Plaza appears in the app menu. No terminal needed. From a terminal it's `sudo apt install ./plaza_0.1.2_amd64.deb`.
+Download `plaza_0.1.3_amd64.deb` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest) and double-click it. The Software app (or Mint's package installer) opens; click **Install** and enter your password. Plaza appears in the app menu. No terminal needed. From a terminal it's `sudo apt install ./plaza_0.1.3_amd64.deb`.
 
 One .deb covers Ubuntu 22.04 and 24.04 and the distros built on them (Zorin OS 17 and 18, Linux Mint 21 and 22, Pop!_OS 22.04 and 24.04). Uninstall from the Software app, or `sudo apt remove plaza`. Recordings in `~/Music/Plaza` are kept.
 
 ### Prebuilt binary (any x86_64 Linux)
 
-Download `plaza-0.1.2-x86_64-linux.tar.gz` and its `.sha256` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), then:
+Download `plaza-0.1.3-x86_64-linux.tar.gz` and its `.sha256` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), then:
 
 ```sh
-sha256sum -c plaza-0.1.2-x86_64-linux.tar.gz.sha256
-tar xf plaza-0.1.2-x86_64-linux.tar.gz
-cd plaza-0.1.2-x86_64-linux
+sha256sum -c plaza-0.1.3-x86_64-linux.tar.gz.sha256
+tar xf plaza-0.1.3-x86_64-linux.tar.gz
+cd plaza-0.1.3-x86_64-linux
 ./install.sh
 ```
 
@@ -171,11 +182,11 @@ The sound engine is `src/` minus `main.rs`, `app.rs`, `audio.rs` and `midi.rs`. 
 
 `PLAZA_HOLD="60,64,67"` holds notes at startup. It's for screenshots.
 
-## Ubuntu and Zorin OS .deb (v0.1.2, 2026-11-06)
+## Ubuntu and Zorin OS .deb (v0.1.3, 2026-11-07)
 
-The 0.1.1 Linux binary linked libpipewire 0.3.53+ and wouldn't start on Ubuntu 22.04 (PipeWire 0.3.48): `undefined symbol: pw_stream_get_time_n`. 0.1.2 drops that link and talks PulseAudio's protocol instead. Tested in clean `ubuntu:22.04` and `ubuntu:24.04` containers, the bases of Zorin OS 17 and 18:
+The 0.1.1 and 0.1.2 Linux binaries linked libpipewire 0.3.53+ and wouldn't start on Ubuntu 22.04 (PipeWire 0.3.48): `undefined symbol: pw_stream_get_time_n`. 0.1.3 drops that link and talks PulseAudio's protocol instead. Tested in clean `ubuntu:22.04` and `ubuntu:24.04` containers, the bases of Zorin OS 17 and 18:
 
-- `apt install ./plaza_0.1.2_amd64.deb` resolves every dependency (ALSA is `libasound2` on 22.04, `libasound2t64` on 24.04), `ldd` finds every library, and `apt remove` leaves nothing behind.
+- `apt install ./plaza_0.1.3_amd64.deb` resolves every dependency (ALSA is `libasound2` on 22.04, `libasound2t64` on 24.04), `ldd` finds every library, and `apt remove` leaves nothing behind.
 - `desktop-file-validate` passes, and so does `appstreamcli validate` (22.04's older appstream notes the `<developer>` tag as unknown, which is informational).
 - Offline render, the real-time engine against a PulseAudio server with only a null sink (output muted, 0 xruns), the window on Xvfb, and REC from the window: `~/Music/Plaza` is created on the first recording and gets a 24-bit WAV.
 - On Arch with PipeWire 1.6 (pipewire-pulse), the muted probe runs on the real sound card at 256 frames, 0 xruns.
