@@ -21,6 +21,7 @@ fn build(overrides: &[(P, f32)]) -> Values {
 const R1: f32 = 1.0;
 const R2: f32 = 3.0;
 const R3_5: f32 = 5.0;
+const R7: f32 = 8.0;
 const R14: f32 = 10.0;
 
 pub fn all() -> Vec<Preset> {
@@ -135,6 +136,76 @@ pub fn all() -> Vec<Preset> {
                 (FAttack, 0.003), (FDecay, 0.32), (FSustain, 0.2), (FRelease, 0.2),
                 (AAttack, 0.003), (ADecay, 0.7), (ASustain, 0.7), (ARelease, 0.18), (AmpVel, 0.4),
                 (Glide, 0.12), (Chorus, 0.0), (RevMix, 0.08), (Saturation, 0.3), (Volume, -1.0),
+            ]),
+        },
+        // Sound pack 1: mid-80s drum-machine synth-pop. Bright, chorused, sequenced.
+        Preset {
+            name: "Glasshouse Poly",
+            blurb: "Two wide-detuned saws and a thin pulse through chorus II. Bright, glassy chords that sit on the beat.",
+            values: build(&[
+                (Saw, 0.8), (Detune, 14.0), (Pulse, 0.35), (PulseWidth, 0.3), (Pwm, 0.2),
+                (Cutoff, 3400.0), (Resonance, 0.15), (FilterEnv, 0.25), (KeyTrack, 0.5), (FilterVel, 0.25),
+                (FAttack, 0.004), (FDecay, 1.2), (FSustain, 0.4), (FRelease, 0.8),
+                (AAttack, 0.015), (ADecay, 2.0), (ASustain, 0.8), (ARelease, 0.9), (AmpVel, 0.3),
+                (LfoRate, 0.7), (Chorus, 2.0),
+                (RevDecay, 2.8), (RevDamp, 0.35), (RevPre, 20.0), (RevMix, 0.22), (Volume, -7.0),
+            ]),
+        },
+        Preset {
+            name: "Night Bus Seq",
+            blurb: "Short resonant pluck for 16th-note sequences. Accents open the filter, so velocity is the groove.",
+            values: build(&[
+                (Saw, 0.6), (Detune, 5.0), (Pulse, 0.7), (PulseWidth, 0.25),
+                (Cutoff, 900.0), (Resonance, 0.35), (FilterEnv, 0.55), (KeyTrack, 0.6), (FilterVel, 0.5),
+                (FAttack, 0.001), (FDecay, 0.16), (FSustain, 0.0), (FRelease, 0.12),
+                (AAttack, 0.001), (ADecay, 0.3), (ASustain, 0.0), (ARelease, 0.12), (AmpVel, 0.45),
+                (Chorus, 1.0), (RevDecay, 1.6), (RevPre, 10.0), (RevMix, 0.15), (Volume, 3.0),
+            ]),
+        },
+        Preset {
+            name: "Towpath Bass",
+            blurb: "A bass voice built to play up high as the tune: bright saw, chorus I, a bit of bite. Try it an octave up.",
+            values: build(&[
+                (Saw, 0.9), (Pulse, 0.3), (PulseWidth, 0.35), (Sub, 0.15), (Detune, 3.0),
+                (Cutoff, 1100.0), (Resonance, 0.25), (FilterEnv, 0.45), (KeyTrack, 0.4), (FilterVel, 0.35),
+                (FAttack, 0.002), (FDecay, 0.35), (FSustain, 0.3), (FRelease, 0.15),
+                (AAttack, 0.002), (ADecay, 0.6), (ASustain, 0.65), (ARelease, 0.15), (AmpVel, 0.4),
+                (Chorus, 1.0), (RevDecay, 1.5), (RevMix, 0.1), (Saturation, 0.2), (Volume, -2.0),
+            ]),
+        },
+        Preset {
+            name: "Redbrick Strings",
+            blurb: "String-machine ensemble: wide saws, slow PWM and the I+II shimmer. Swells in, hangs in the room.",
+            values: build(&[
+                (Saw, 0.9), (Detune, 18.0), (Pulse, 0.25), (PulseWidth, 0.4), (Pwm, 0.5),
+                (Cutoff, 3000.0), (Resonance, 0.05), (FilterEnv, 0.1), (KeyTrack, 0.5), (FilterVel, 0.1),
+                (FAttack, 0.4), (FDecay, 2.0), (FSustain, 0.7), (FRelease, 1.5),
+                (AAttack, 0.35), (ADecay, 1.0), (ASustain, 0.92), (ARelease, 1.5), (AmpVel, 0.2),
+                (LfoRate, 5.5), (LfoDelay, 0.6), (Vibrato, 0.04), (Chorus, 3.0),
+                (RevDecay, 3.5), (RevDamp, 0.4), (RevPre, 30.0), (RevMix, 0.3), (Volume, -7.0),
+            ]),
+        },
+        Preset {
+            name: "Overcast Brass",
+            blurb: "Hard, bright poly stab: detuned saws, a fast filter blip and a little drive. Play it tight.",
+            values: build(&[
+                (Saw, 1.0), (Detune, 10.0), (Pulse, 0.2), (PulseWidth, 0.25),
+                (Cutoff, 700.0), (Resonance, 0.15), (FilterEnv, 0.7), (KeyTrack, 0.5), (FilterVel, 0.4),
+                (FAttack, 0.015), (FDecay, 0.22), (FSustain, 0.25), (FRelease, 0.15),
+                (AAttack, 0.004), (ADecay, 0.3), (ASustain, 0.55), (ARelease, 0.15), (AmpVel, 0.4),
+                (Chorus, 1.0), (RevDecay, 1.8), (RevMix, 0.16), (Saturation, 0.3), (Volume, -4.0),
+            ]),
+        },
+        Preset {
+            name: "Platform Bell",
+            blurb: "Digital FM bell at 7:1 over a thin pulse. A clean, cold strike for countermelodies.",
+            values: build(&[
+                (Saw, 0.0), (Pulse, 0.2), (PulseWidth, 0.2), (FmLevel, 0.85), (FmRatio, R7), (FmIndex, 2.4),
+                (FmDecay, 0.4),
+                (Cutoff, 9000.0), (Resonance, 0.0), (FilterEnv, 0.1), (KeyTrack, 0.2), (FilterVel, 0.3),
+                (FAttack, 0.001), (FDecay, 0.8), (FSustain, 0.0), (FRelease, 0.6),
+                (AAttack, 0.001), (ADecay, 1.8), (ASustain, 0.0), (ARelease, 0.8), (AmpVel, 0.5),
+                (Chorus, 1.0), (RevDecay, 2.5), (RevPre, 30.0), (RevMix, 0.25), (Volume, -3.0),
             ]),
         },
     ]
