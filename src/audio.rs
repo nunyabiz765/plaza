@@ -1,5 +1,6 @@
-//! Real-time output through cpal: native PipeWire on Linux (falling back to
-//! PulseAudio or ALSA), WASAPI on Windows, CoreAudio on macOS. The callback
+//! Real-time output through cpal: PulseAudio's protocol on Linux (PulseAudio
+//! itself or PipeWire's pipewire-pulse, falling back to ALSA), WASAPI on Windows,
+//! CoreAudio on macOS. The callback
 //! owns the engine; nothing in it locks or allocates.
 
 use plaza::engine::{Engine, Event};

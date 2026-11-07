@@ -20,10 +20,12 @@ midir = "0.11"
 rtrb = "0.3"
 slint = { version = "1.18", default-features = false, features = ["std", "compat-1-2", "backend-winit", "renderer-femtovg", "renderer-software"] }
 
-# Linux: native PipeWire, falling back to PulseAudio, then ALSA. Windows gets WASAPI and
-# macOS CoreAudio from cpal's defaults.
+# Linux: PulseAudio's protocol (pure Rust, no library), which PipeWire also serves through
+# pipewire-pulse, falling back to ALSA. Not cpal's native PipeWire host: it links
+# libpipewire >= 0.3.53, and Ubuntu 22.04 (Zorin OS 17, Mint 21) ships 0.3.48, so the
+# binary wouldn't start there. Windows gets WASAPI and macOS CoreAudio from cpal's defaults.
 [target.'cfg(target_os = "linux")'.dependencies]
-cpal = { version = "0.18", features = ["pipewire", "pulseaudio"] }
+cpal = { version = "0.18", features = ["pulseaudio"] }
 libc = "0.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]

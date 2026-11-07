@@ -1,6 +1,6 @@
 # Plaza
 
-An 80s-style polysynth for making vaporwave, for Linux, Windows and macOS. An ensemble chorus, a big modulated reverb, a cassette stage, and a slow + pitch down switch. Everything is synthesized; there are no samples. Rust, [Slint](https://slint.dev) UI, [cpal](https://github.com/RustAudio/cpal) audio (native PipeWire on Linux, WASAPI on Windows, CoreAudio on macOS), [midir](https://github.com/Boddlnagg/midir) for USB MIDI. It makes no network connections.
+An 80s-style polysynth for making vaporwave, for Linux, Windows and macOS. An ensemble chorus, a big modulated reverb, a cassette stage, and a slow + pitch down switch. Everything is synthesized; there are no samples. Rust, [Slint](https://slint.dev) UI, [cpal](https://github.com/RustAudio/cpal) audio (PulseAudio or PipeWire on Linux, WASAPI on Windows, CoreAudio on macOS), [midir](https://github.com/Boddlnagg/midir) for USB MIDI. It makes no network connections.
 
 Free and open source, from [Center Point Labs](https://centerpointlabs.dev/services/plaza/). Inspired by classic 80s polysynths and FM keyboards; not affiliated with any instrument maker.
 
@@ -70,7 +70,7 @@ lower octave    upper octave
 
 ## Audio
 
-On Linux, Plaza uses cpal's native PipeWire host, falling back to PulseAudio. Windows uses WASAPI (shared mode) and macOS CoreAudio, each on the system's default output device. It asks for a 256-frame buffer (5.3 ms at 48 kHz) so the keys feel immediate; if the server refuses, it falls back to the server's default. `PLAZA_BUFFER=512 plaza` picks another size, and `PLAZA_BUFFER=0` uses the server default. The audio callback doesn't lock or allocate, and it turns on flush-to-zero so decaying tails can't cause denormal CPU spikes. The status bar shows the buffer size, worst-case DSP load, active voices, and xruns if any happen.
+On Linux, Plaza talks to the sound server over PulseAudio's protocol, which PipeWire also serves (pipewire-pulse, standard on Ubuntu 24.04 and most current desktops), falling back to ALSA. Since 0.1.2 it no longer links libpipewire, whose Ubuntu 22.04 version is too old for cpal's native PipeWire host. Windows uses WASAPI (shared mode) and macOS CoreAudio, each on the system's default output device. It asks for a 256-frame buffer (5.3 ms at 48 kHz) so the keys feel immediate; if the server refuses, it falls back to the server's default. `PLAZA_BUFFER=512 plaza` picks another size, and `PLAZA_BUFFER=0` uses the server default. The audio callback doesn't lock or allocate, and it turns on flush-to-zero so decaying tails can't cause denormal CPU spikes. The status bar shows the buffer size, worst-case DSP load, active voices, and xruns if any happen.
 
 ## Command line
 
@@ -101,7 +101,13 @@ Download `plaza-0.1.2-macos-universal.dmg` from the [latest release](https://git
 
 Plaza is signed with a Developer ID and notarized by Apple (since 0.1.2), so it opens like any other downloaded app.
 
-### Prebuilt binary (x86_64 Linux)
+### Ubuntu, Zorin OS, Linux Mint, Pop!_OS (.deb)
+
+Download `plaza_0.1.2_amd64.deb` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest) and double-click it. The Software app (or Mint's package installer) opens; click **Install** and enter your password. Plaza appears in the app menu. No terminal needed. From a terminal it's `sudo apt install ./plaza_0.1.2_amd64.deb`.
+
+One .deb covers Ubuntu 22.04 and 24.04 and the distros built on them (Zorin OS 17 and 18, Linux Mint 21 and 22, Pop!_OS 22.04 and 24.04). Uninstall from the Software app, or `sudo apt remove plaza`. Recordings in `~/Music/Plaza` are kept.
+
+### Prebuilt binary (any x86_64 Linux)
 
 Download `plaza-0.1.2-x86_64-linux.tar.gz` and its `.sha256` from the [latest release](https://github.com/nunyabiz765/plaza/releases/latest), then:
 
@@ -112,20 +118,19 @@ cd plaza-0.1.2-x86_64-linux
 ./install.sh
 ```
 
-The binary was built on Debian 12 and needs glibc 2.35 or newer. At run time it needs the ALSA library (`alsa-lib` / `libasound2`), a PipeWire or PulseAudio server, fontconfig and xkbcommon, which nearly every desktop already has.
+The binary was built on Debian 12 and needs glibc 2.35 or newer. At run time it needs the ALSA library (`alsa-lib` / `libasound2`), a PulseAudio or PipeWire (with pipewire-pulse) sound server, fontconfig and xkbcommon, which nearly every desktop already has.
 
 ### From source
 
-Needs Rust (stable), clang (for the PipeWire bindings), and the development files for PipeWire, ALSA, PulseAudio, fontconfig and xkbcommon:
+Needs Rust (stable) and the development files for ALSA, fontconfig and xkbcommon:
 
 ```sh
 # Arch
-sudo pacman -S --needed rust clang pipewire alsa-lib libpulse fontconfig libxkbcommon
+sudo pacman -S --needed rust alsa-lib fontconfig libxkbcommon
 # Debian / Ubuntu
-sudo apt install build-essential clang libclang-dev pkg-config libpipewire-0.3-dev libspa-0.2-dev \
-  libasound2-dev libpulse-dev libfontconfig1-dev libxkbcommon-dev
+sudo apt install build-essential pkg-config libasound2-dev libfontconfig1-dev libxkbcommon-dev
 # Fedora
-sudo dnf install rust cargo clang pipewire-devel alsa-lib-devel pulseaudio-libs-devel fontconfig-devel libxkbcommon-devel
+sudo dnf install rust cargo alsa-lib-devel fontconfig-devel libxkbcommon-devel
 
 git clone https://github.com/nunyabiz765/plaza
 cd plaza
@@ -145,10 +150,10 @@ rm ~/.local/bin/plaza ~/.local/share/applications/plaza.desktop ~/.local/share/i
 ```sh
 cargo test --release      # DSP unit tests + offline render checks (34 tests)
 tools/shots.sh            # retake docs/screenshots on a private Xvfb display (runs --muted)
-tools/build-release.sh OUT  # Linux release tarball, built in a Debian 12 container (podman)
+tools/build-release.sh OUT  # Linux release tarball + .deb, built in a Debian 12 container (podman)
 ```
 
-Windows and macOS builds come from GitHub Actions (`.github/workflows/release.yml`): pushing a `v*` tag builds all three platforms, runs the tests on each, and attaches the Linux tarball, the Windows zip and the macOS .dmg to that tag's release. To build on Windows or macOS yourself, install Rust and run `cargo build --release`; nothing else is needed. `tools/package-windows.sh` and `tools/package-macos.sh` make the zip and the universal `.app`/`.dmg`.
+Windows and macOS builds come from GitHub Actions (`.github/workflows/release.yml`): pushing a `v*` tag builds all three platforms, runs the tests on each, and attaches the Linux tarball and .deb (after installing the .deb on clean Ubuntu 22.04 and 24.04 containers), the Windows zip and the macOS .dmg to that tag's release. To build on Windows or macOS yourself, install Rust and run `cargo build --release`; nothing else is needed. `tools/package-windows.sh` and `tools/package-macos.sh` make the zip and the universal `.app`/`.dmg`.
 
 The sound engine is `src/` minus `main.rs`, `app.rs`, `audio.rs` and `midi.rs`. It's a UI-free library, so every test runs headless. The tests cover:
 
@@ -165,6 +170,17 @@ The sound engine is `src/` minus `main.rs`, `app.rs`, `audio.rs` and `midi.rs`. 
 - every preset rendering, slowed and not, to sane levels, deterministically, with tails that die out
 
 `PLAZA_HOLD="60,64,67"` holds notes at startup. It's for screenshots.
+
+## Ubuntu and Zorin OS .deb (v0.1.2, 2026-11-06)
+
+The 0.1.1 Linux binary linked libpipewire 0.3.53+ and wouldn't start on Ubuntu 22.04 (PipeWire 0.3.48): `undefined symbol: pw_stream_get_time_n`. 0.1.2 drops that link and talks PulseAudio's protocol instead. Tested in clean `ubuntu:22.04` and `ubuntu:24.04` containers, the bases of Zorin OS 17 and 18:
+
+- `apt install ./plaza_0.1.2_amd64.deb` resolves every dependency (ALSA is `libasound2` on 22.04, `libasound2t64` on 24.04), `ldd` finds every library, and `apt remove` leaves nothing behind.
+- `desktop-file-validate` passes, and so does `appstreamcli validate` (22.04's older appstream notes the `<developer>` tag as unknown, which is informational).
+- Offline render, the real-time engine against a PulseAudio server with only a null sink (output muted, 0 xruns), the window on Xvfb, and REC from the window: `~/Music/Plaza` is created on the first recording and gets a 24-bit WAV.
+- On Arch with PipeWire 1.6 (pipewire-pulse), the muted probe runs on the real sound card at 256 frames, 0 xruns.
+
+Not tested: a real Zorin OS install, the GNOME Software / Zorin Software double-click flow, Wayland sessions on GNOME, and audible playback on any of them.
 
 ## Windows and macOS (v0.1.1, 2026-11-06)
 
